@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>3D Molecule Editor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1e1e2e; color: #cdd6f4; font-family: sans-serif; overflow: hidden; }
+
+  #toolbar {
+    display: flex; gap: 4px; padding: 4px 8px; flex-wrap: wrap;
+    background: #181825; border-bottom: 1px solid #313244;
+    align-items: center;
+  }
+  .tb-group {
+    display: flex; gap: 2px; align-items: center;
+    border-right: 1px solid #313244; padding-right: 6px; margin-right: 2px;
+  }
+  .tb-group:last-child { border-right: none; }
+  .tb-label { font-size: 10px; color: #6c7086; margin-right: 2px; }
+
+  button, .elem-btn {
+    padding: 3px 8px; border: 1px solid #45475a; border-radius: 3px;
+    background: #313244; color: #cdd6f4; cursor: pointer; font-size: 12px;
+    min-width: 28px; text-align: center;
+  }
+  button:hover, .elem-btn:hover { background: #45475a; }
+  button.active, .elem-btn.active { background: #89b4fa; color: #1e1e2e; font-weight: bold; }
+
+  .elem-btn.C  { border-color: #585858; }
+  .elem-btn.H  { border-color: #888; }
+  .elem-btn.N  { border-color: #3050f8; }
+  .elem-btn.O  { border-color: #ff0d0d; }
+  .elem-btn.S  { border-color: #c8c800; }
+  .elem-btn.P  { border-color: #ff8000; }
+  .elem-btn.F  { border-color: #90e050; }
+  .elem-btn.Cl { border-color: #1ff01f; }
+  .elem-btn.Br { border-color: #a62929; }
+
+  #viewer-container { position: relative; width: 100%; height: calc(100vh - 76px); }
+  #viewer { width: 100%; height: 100%; }
+
+  #info {
+    padding: 2px 8px; font-size: 11px; background: #181825;
+    border-top: 1px solid #313244; height: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #mode-indicator {
+    background: #89b4fa; color: #1e1e2e; padding: 1px 8px;
+    border-radius: 3px; font-weight: bold; font-size: 11px;
+  }
+  #crosshair {
+    position: absolute; pointer-events: none; display: none;
+    width: 20px; height: 20px; z-index: 100;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ''; position: absolute; background: #89b4fa;
+  }
+  #crosshair::before { width: 1px; height: 100%; left: 50%; }
+  #crosshair::after  { width: 100%; height: 1px; top: 50%; }
+
+  #bond-line {
+    position: absolute; pointer-events: none; display: none; z-index: 99;
+    border: none; height: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <!-- Mode -->
+  <div class="tb-group">
+    <span class="tb-label">Mode:</span>
+    <button id="mode-add" class="active" onclick="setMode('add')">配置</button>
+    <button id="mode-bond" onclick="setMode('bond')">結合</button>
+    <button id="mode-move" onclick="setMode('move')">移動</button>
+    <button id="mode-del" onclick="setMode('delete')">削除</button>
+  </div>
+  <!-- Elements -->
+  <div class="tb-group">
+    <span class="tb-label">元素:</span>
+    <button class="elem-btn C active" onclick="setElement('C')">C</button>
+    <button class="elem-btn H" onclick="setElement('H')">H</button>
+    <button class="elem-btn N" onclick="setElement('N')">N</button>
+    <button class="elem-btn O" onclick="setElement('O')">O</button>
+    <button class="elem-btn S" onclick="setElement('S')">S</button>
+    <button class="elem-btn P" onclick="setElement('P')">P</button>
+    <button class="elem-btn F" onclick="setElement('F')">F</button>
+    <button class="elem-btn Cl" onclick="setElement('Cl')">Cl</button>
+    <button class="elem-btn Br" onclick="setElement('Br')">Br</button>
+  </div>
+  <!-- Bond order -->
+  <div class="tb-group">
+    <span class="tb-label">結合次数:</span>
+    <button id="bo-1" class="active" onclick="setBondOrder(1)">1</button>
+    <button id="bo-2" onclick="setBondOrder(2)">2</button>
+    <button id="bo-3" onclick="setBondOrder(3)">3</button>
+  </div>
+  <!-- View/Actions -->
+  <div class="tb-group">
+    <button onclick="undoAction()">元に戻す</button>
+    <button onclick="clearAll()">全削除</button>
+    <button onclick="addHydrogens()">H付加</button>
+    <button onclick="fitView()">フィット</button>
+  </div>
+</div>
+
+<div id="viewer-container">
+  <div id="viewer"></div>
+  <div id="crosshair"></div>
+  <svg id="bond-line" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;z-index:99;">
+    <line id="bond-svg-line" x1="0" y1="0" x2="0" y2="0" stroke="#89b4fa" stroke-width="2" stroke-dasharray="4,4"/>
+  </svg>
+</div>
+
+<div id="info">
+  <span id="info-text">左クリック: 原子配置 / 右クリック: 回転</span>
+  <span id="mode-indicator">配置モード</span>
+  <span id="status">原子数: 0</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.1.0/3Dmol-min.js"></script>
+<script>
+// ====== State ======
+let viewer = null;
+let atoms = [];          // {id, elem, x, y, z}
+let bonds = [];          // {from, to, order}
+let nextId = 1;
+let mode = "add";        // add | bond | move | delete
+let currentElem = "C";
+let currentBondOrder = 1;
+let history = [];        // for undo
+let bondStartAtom = null;
+let movingAtom = null;
+let mouseDown = false;
+
+// Bond lengths (Angstrom) for placing new atoms at reasonable distances
+const BOND_LENGTHS = {
+  'C-C': 1.54, 'C=C': 1.34, 'C#C': 1.20,
+  'C-H': 1.09, 'C-N': 1.47, 'C=N': 1.29, 'C-O': 1.43, 'C=O': 1.23,
+  'C-S': 1.82, 'C-F': 1.35, 'C-Cl': 1.77, 'C-Br': 1.94, 'C-P': 1.87,
+  'N-H': 1.01, 'N-N': 1.45, 'O-H': 0.96, 'S-H': 1.34,
+  'default': 1.5
+};
+
+function getBondLength(e1, e2, order) {
+  const key1 = `${e1}-${e2}`, key2 = `${e2}-${e1}`;
+  const sep = order === 2 ? '=' : order === 3 ? '#' : '-';
+  const k1 = `${e1}${sep}${e2}`, k2 = `${e2}${sep}${e1}`;
+  return BOND_LENGTHS[k1] || BOND_LENGTHS[k2] ||
+         BOND_LENGTHS[`${e1}-${e2}`] || BOND_LENGTHS[`${e2}-${e1}`] ||
+         BOND_LENGTHS['default'];
+}
+
+// ====== Viewer ======
+function initViewer() {
+  viewer = $3Dmol.createViewer("viewer", {
+    backgroundColor: "0x1e1e2e",
+    antialias: true,
+    disableFog: true,
+  });
+  // Disable default click behavior, we handle it ourselves
+  viewer.setClickable({}, true, onAtomClick);
+}
+
+function rebuildView() {
+  if (!viewer) return;
+  viewer.removeAllModels();
+  if (atoms.length === 0) { viewer.render(); updateStatus(); return; }
+
+  const xyz = buildXYZ();
+  const model = viewer.addModel(xyz, "xyz");
+  viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.3 } });
+
+  // Highlight based on mode
+  if (mode === "bond" && bondStartAtom !== null) {
+    const idx = atoms.findIndex(a => a.id === bondStartAtom);
+    if (idx >= 0) {
+      viewer.setStyle({ index: idx }, { stick: { radius: 0.15 }, sphere: { scale: 0.5, color: "0x89b4fa" } });
+    }
+  }
+
+  viewer.render();
+  updateStatus();
+}
+
+function buildXYZ() {
+  let lines = [String(atoms.length), "editor"];
+  for (const a of atoms) {
+    lines.push(`${a.elem}  ${a.x.toFixed(8)}  ${a.y.toFixed(8)}  ${a.z.toFixed(8)}`);
+  }
+  return lines.join("\n") + "\n";
+}
+
+function updateStatus() {
+  document.getElementById("status").textContent = `原子数: ${atoms.length}`;
+}
+
+function fitView() {
+  if (viewer) { viewer.zoomTo(); viewer.render(); }
+}
+
+// ====== Mode switching ======
+function setMode(m) {
+  mode = m;
+  bondStartAtom = null;
+  movingAtom = null;
+  document.querySelectorAll("#toolbar [id^='mode-']").forEach(b => b.classList.remove("active"));
+  const el = document.getElementById("mode-" + m);
+  if (el) el.classList.add("active");
+
+  const labels = { add: "配置モード", bond: "結合モード", move: "移動モード", delete: "削除モード" };
+  document.getElementById("mode-indicator").textContent = labels[m] || m;
+
+  const hints = {
+    add: "左クリック: 原子配置 / 右クリック: 回転",
+    bond: "原子をクリックして結合の始点・終点を選択",
+    move: "原子をドラッグして移動",
+    delete: "原子をクリックして削除",
+  };
+  document.getElementById("info-text").textContent = hints[m] || "";
+
+  // Show crosshair in add mode
+  document.getElementById("crosshair").style.display = (m === "add") ? "block" : "none";
+  rebuildView();
+}
+
+function setElement(e) {
+  currentElem = e;
+  document.querySelectorAll(".elem-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".elem-btn." + e).forEach(b => b.classList.add("active"));
+}
+
+function setBondOrder(o) {
+  currentBondOrder = o;
+  document.querySelectorAll("[id^='bo-']").forEach(b => b.classList.remove("active"));
+  document.getElementById("bo-" + o)?.classList.add("active");
+}
+
+// ====== Click handling ======
+function onAtomClick(atom, viewer, event) {
+  if (!atom) return;
+  const idx = atom.index;
+  if (idx < 0 || idx >= atoms.length) return;
+  const a = atoms[idx];
+
+  if (mode === "bond") {
+    if (bondStartAtom === null) {
+      bondStartAtom = a.id;
+      rebuildView();
+    } else if (bondStartAtom !== a.id) {
+      // Check if bond already exists
+      const existing = bonds.find(b =>
+        (b.from === bondStartAtom && b.to === a.id) ||
+        (b.from === a.id && b.to === bondStartAtom));
+      saveHistory();
+      if (existing) {
+        existing.order = currentBondOrder;
+      } else {
+        bonds.push({ from: bondStartAtom, to: a.id, order: currentBondOrder });
+      }
+      bondStartAtom = null;
+      rebuildView();
+      notifyChange();
+    }
+  } else if (mode === "delete") {
+    saveHistory();
+    // Remove atom and its bonds
+    bonds = bonds.filter(b => b.from !== a.id && b.to !== a.id);
+    atoms = atoms.filter(at => at.id !== a.id);
+    rebuildView();
+    notifyChange();
+  }
+}
+
+// ====== Canvas click for placing atoms ======
+const container = document.getElementById("viewer-container");
+container.addEventListener("mousedown", (e) => {
+  if (e.button !== 0) return; // left click only
+  mouseDown = true;
+
+  if (mode === "add") {
+    // Calculate 3D position from screen coordinates
+    const rect = container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    // Try to find if clicking near existing atom to place bonded atom
+    const nearest = findNearestAtomScreen(mx, my);
+    saveHistory();
+
+    let x, y, z;
+    if (nearest && nearest.dist < 30) {
+      // Place new atom bonded to nearest, at proper bond length
+      const base = nearest.atom;
+      const bl = getBondLength(base.elem, currentElem, 1);
+      // Pick a direction away from existing bonds
+      const dir = findOpenDirection(base);
+      x = base.x + dir[0] * bl;
+      y = base.y + dir[1] * bl;
+      z = base.z + dir[2] * bl;
+      const newAtom = { id: nextId++, elem: currentElem, x, y, z };
+      atoms.push(newAtom);
+      bonds.push({ from: base.id, to: newAtom.id, order: 1 });
+    } else {
+      // Place in empty space - use viewer's unprojection
+      const pos = screenTo3D(mx, my);
+      x = pos.x; y = pos.y; z = pos.z;
+      atoms.push({ id: nextId++, elem: currentElem, x, y, z });
+    }
+
+    rebuildView();
+    notifyChange();
+  } else if (mode === "move") {
+    const rect = container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const nearest = findNearestAtomScreen(mx, my);
+    if (nearest && nearest.dist < 30) {
+      movingAtom = nearest.atom;
+      saveHistory();
+    }
+  }
+});
+
+container.addEventListener("mousemove", (e) => {
+  const rect = container.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // Update crosshair
+  const ch = document.getElementById("crosshair");
+  if (mode === "add") {
+    ch.style.display = "block";
+    ch.style.left = (mx - 10) + "px";
+    ch.style.top = (my - 10) + "px";
+  }
+
+  // Move atom (keep original Z)
+  if (mode === "move" && movingAtom && mouseDown) {
+    const pos = screenTo3D(mx, my);
+    movingAtom.x = pos.x;
+    movingAtom.y = pos.y;
+    // Don't change Z when dragging in screen plane
+    rebuildView();
+  }
+});
+
+container.addEventListener("mouseup", (e) => {
+  mouseDown = false;
+  if (mode === "move" && movingAtom) {
+    movingAtom = null;
+    notifyChange();
+  }
+});
+
+// ====== 3D math helpers ======
+// modelToScreen returns page-relative coords (adds canvas page offset).
+// Our sx,sy are relative to #viewer-container.
+// toLocal() converts modelToScreen output to container-relative coords.
+function toLocal(sp) {
+  const containerRect = document.getElementById("viewer-container").getBoundingClientRect();
+  return { x: sp.x - containerRect.left, y: sp.y - containerRect.top };
+}
+
+// Measure actual px-per-angstrom by probing modelToScreen with synthetic points.
+// Works even without a model loaded — modelToScreen applies the current view matrix.
+function measureScale() {
+  const o  = viewer.modelToScreen({x: 0, y: 0, z: 0});
+  const px = viewer.modelToScreen({x: 1, y: 0, z: 0});
+  const py = viewer.modelToScreen({x: 0, y: 1, z: 0});
+  if (!o || !px || !py) return null;
+  return {
+    originScreen: toLocal(o),
+    pxPerAx: px.x - o.x,   // screen-pixels per 1 Å in world-X
+    pxPerAy: o.y - py.y,   // screen-pixels per 1 Å in world-Y (Y flipped)
+  };
+}
+
+function screenTo3D(sx, sy) {
+  if (!viewer) return { x: 0, y: 0, z: 0 };
+
+  let refZ = 0;
+  if (!is2DMode && atoms.length > 0) {
+    refZ = atoms.reduce((s, a) => s + a.z, 0) / atoms.length;
+  }
+
+  // Primary method: use modelToScreen to empirically measure the projection scale.
+  // This works for all cases (0, 1, or N atoms) and adapts to any zoom/rotation.
+  const scale = measureScale();
+  if (scale && Math.abs(scale.pxPerAx) > 0.1 && Math.abs(scale.pxPerAy) > 0.1) {
+    const org = scale.originScreen;
+    return {
+      x: (sx - org.x) / scale.pxPerAx,
+      y: -(sy - org.y) / scale.pxPerAy,
+      z: refZ
+    };
+  }
+
+  // Fallback (should rarely hit): simple center-based mapping
+  const rect = document.getElementById("viewer").getBoundingClientRect();
+  const cx = rect.width / 2, cy = rect.height / 2;
+  const defaultScale = 7;  // ~7 px/Å is typical default
+  return {
+    x: (sx - cx) / defaultScale,
+    y: -(sy - cy) / defaultScale,
+    z: refZ
+  };
+}
+
+function findNearestAtomScreen(sx, sy) {
+  if (!viewer || atoms.length === 0) return null;
+  let best = null, bestDist = Infinity;
+  const model = viewer.getModel();
+  if (!model) return null;
+  const allAtoms = model.selectedAtoms({});
+  for (let i = 0; i < allAtoms.length && i < atoms.length; i++) {
+    const raw = viewer.modelToScreen(allAtoms[i]);
+    if (!raw) continue;
+    const sp = toLocal(raw);
+    const dx = sp.x - sx, dy = sp.y - sy;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < bestDist) { bestDist = d; best = { atom: atoms[i], dist: d, screenPos: sp }; }
+  }
+  return best;
+}
+
+function findOpenDirection(atom) {
+  // Find a direction not occupied by existing bonds
+  const bonded = bonds
+    .filter(b => b.from === atom.id || b.to === atom.id)
+    .map(b => {
+      const otherId = b.from === atom.id ? b.to : b.from;
+      return atoms.find(a => a.id === otherId);
+    }).filter(Boolean);
+
+  if (bonded.length === 0) return [1, 0, 0];
+
+  // Compute average direction of existing bonds
+  let ax = 0, ay = 0, az = 0;
+  for (const b of bonded) {
+    const dx = b.x - atom.x, dy = b.y - atom.y, dz = b.z - atom.z;
+    const len = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1;
+    ax += dx/len; ay += dy/len; az += dz/len;
+  }
+
+  // Go opposite to the average direction
+  let len = Math.sqrt(ax*ax + ay*ay + az*az);
+  if (len < 0.01) {
+    // All bonds cancel out, pick perpendicular
+    const first = bonded[0];
+    const dx = first.x - atom.x, dy = first.y - atom.y, dz = first.z - atom.z;
+    // Cross product with Z axis
+    return normalize(-dy, dx, 0.3);
+  }
+  return normalize(-ax, -ay, -az);
+}
+
+function normalize(x, y, z) {
+  const len = Math.sqrt(x*x + y*y + z*z) || 1;
+  return [x/len, y/len, z/len];
+}
+
+// ====== History (undo) ======
+function saveHistory() {
+  history.push({
+    atoms: JSON.parse(JSON.stringify(atoms)),
+    bonds: JSON.parse(JSON.stringify(bonds)),
+    nextId: nextId,
+  });
+  if (history.length > 50) history.shift();
+}
+
+function undoAction() {
+  if (history.length === 0) return;
+  const state = history.pop();
+  atoms = state.atoms;
+  bonds = state.bonds;
+  nextId = state.nextId;
+  rebuildView();
+  notifyChange();
+}
+
+function clearAll() {
+  saveHistory();
+  atoms = [];
+  bonds = [];
+  bondStartAtom = null;
+  rebuildView();
+  notifyChange();
+}
+
+// ====== Auto H ======
+function addHydrogens() {
+  saveHistory();
+  const valence = { C: 4, N: 3, O: 2, S: 2, P: 3, F: 1, Cl: 1, Br: 1, H: 1 };
+  for (const atom of [...atoms]) {
+    const maxV = valence[atom.elem] || 4;
+    let currentV = 0;
+    for (const b of bonds) {
+      if (b.from === atom.id || b.to === atom.id) currentV += b.order;
+    }
+    const need = maxV - currentV;
+    for (let i = 0; i < need; i++) {
+      const dir = findOpenDirection(atom);
+      const bl = getBondLength(atom.elem, "H", 1);
+      // Add small random offset to avoid overlap
+      const angle = (i * 2 * Math.PI / need) + Math.random() * 0.3;
+      const rx = dir[0] * Math.cos(angle * 0.3) - dir[1] * Math.sin(angle * 0.3);
+      const ry = dir[0] * Math.sin(angle * 0.3) + dir[1] * Math.cos(angle * 0.3);
+      const rz = dir[2] + (i * 0.4 - need * 0.2);
+      const n = normalize(rx, ry, rz);
+      const h = { id: nextId++, elem: "H", x: atom.x + n[0]*bl, y: atom.y + n[1]*bl, z: atom.z + n[2]*bl };
+      atoms.push(h);
+      bonds.push({ from: atom.id, to: h.id, order: 1 });
+    }
+  }
+  rebuildView();
+  notifyChange();
+}
+
+// ====== External API (called from Python) ======
+function loadXYZ(xyzText) {
+  if (!viewer) return;
+  atoms = [];
+  bonds = [];
+  nextId = 1;
+  history = [];
+  if (!xyzText || !xyzText.trim()) { rebuildView(); return; }
+
+  const lines = xyzText.trim().split("\n");
+  let start = 0;
+  if (lines.length > 0 && /^\d+$/.test(lines[0].trim())) start = 2;
+  for (let i = start; i < lines.length; i++) {
+    const parts = lines[i].trim().split(/\s+/);
+    if (parts.length < 4) continue;
+    atoms.push({
+      id: nextId++,
+      elem: parts[0],
+      x: parseFloat(parts[1]),
+      y: parseFloat(parts[2]),
+      z: parseFloat(parts[3]),
+    });
+  }
+  // Auto-detect bonds by distance
+  autoDetectBonds();
+  rebuildView();
+  fitView();
+}
+
+function autoDetectBonds() {
+  bonds = [];
+  for (let i = 0; i < atoms.length; i++) {
+    for (let j = i + 1; j < atoms.length; j++) {
+      const a = atoms[i], b = atoms[j];
+      const dx = a.x-b.x, dy = a.y-b.y, dz = a.z-b.z;
+      const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      const maxBond = getBondLength(a.elem, b.elem, 1) * 1.3;
+      if (dist < maxBond) {
+        bonds.push({ from: a.id, to: b.id, order: 1 });
+      }
+    }
+  }
+}
+
+function getXYZ() {
+  return buildXYZ();
+}
+
+function getAtomCount() {
+  return atoms.length;
+}
+
+// ====== Notify Python ======
+function notifyChange() {
+  // QWebChannel bridge
+  if (window.pyBridge && window.pyBridge.onMoleculeChanged) {
+    window.pyBridge.onMoleculeChanged(buildXYZ());
+  }
+}
+
+// ====== 2D / 3D mode ======
+let is2DMode = false;
+
+function set2DMode(enabled) {
+  is2DMode = enabled;
+  if (!viewer) return;
+  if (enabled) {
+    // Top-down view, lock rotation
+    viewer.setView([0, 0, 0, viewer.getView()[3] || 20, 0, 0, 0, 1]);
+    viewer.render();
+    document.getElementById("info-text").textContent =
+      "2Dモード: 左クリックで配置、Z=0平面に固定";
+  } else {
+    document.getElementById("info-text").textContent =
+      "3Dモード: 左クリックで配置、右ドラッグで回転";
+  }
+}
+
+// ====== Init ======
+document.addEventListener("DOMContentLoaded", () => {
+  initViewer();
+  setMode("add");
+});
+</script>
+</body>
+</html>

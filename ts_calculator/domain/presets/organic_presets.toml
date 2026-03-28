@@ -1,0 +1,23 @@
+[general]
+label = "有機反応 – 一般"
+neb_n_images = 12
+dft_method = "b3lyp-d3bj"
+dft_basis = "6-31g(d)"
+ts_opt_method = "b3lyp-d3bj"
+ts_opt_basis = "6-31g(d)"
+freq_method = "b3lyp-d3bj"
+freq_basis = "6-31g(d)"
+irc_points = 20
+ccsd_basis = "cc-pvtz"
+
+[pericyclic]
+label = "有機反応 – ペリ環状"
+neb_n_images = 16
+dft_method = "m06-2x"
+dft_basis = "6-31g(d)"
+ts_opt_method = "m06-2x"
+ts_opt_basis = "6-31g(d)"
+freq_method = "m06-2x"
+freq_basis = "6-31g(d)"
+irc_points = 30
+ccsd_basis = "cc-pvtz"

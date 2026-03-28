@@ -1,0 +1,25 @@
+[pd_catalysis]
+label = "遷移金属 – Pd触媒"
+neb_n_images = 16
+dft_method = "pbe0-d3bj"
+dft_basis = "def2-svp"
+ts_opt_method = "pbe0-d3bj"
+ts_opt_basis = "def2-svp"
+freq_method = "pbe0-d3bj"
+freq_basis = "def2-svp"
+irc_points = 30
+ccsd_basis = "def2-tzvp"
+default_multiplicity = 1
+
+[rh_catalysis]
+label = "遷移金属 – Rh触媒"
+neb_n_images = 16
+dft_method = "pbe0-d3bj"
+dft_basis = "def2-svp"
+ts_opt_method = "pbe0-d3bj"
+ts_opt_basis = "def2-svp"
+freq_method = "pbe0-d3bj"
+freq_basis = "def2-svp"
+irc_points = 30
+ccsd_basis = "def2-tzvp"
+default_multiplicity = 1

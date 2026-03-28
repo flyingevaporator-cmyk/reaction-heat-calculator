@@ -1,0 +1,10 @@
+[engines]
+xtb_path = "xtb"          # xTB executable name or full path
+psi4_python = "psi4"      # psi4 executable name or full path
+
+[defaults]
+n_cores = 4
+memory_gb = 8.0
+
+[workspace]
+base_dir = ""             # empty = ~/.ts_calculator/workspaces

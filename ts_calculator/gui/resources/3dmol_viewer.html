@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>3D Molecule Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1e1e2e; overflow: hidden; }
+  #viewer { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="viewer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.1.0/3Dmol-min.js"></script>
+<script>
+let viewer = null;
+
+function initViewer() {
+  viewer = $3Dmol.createViewer("viewer", {
+    backgroundColor: "0x1e1e2e",
+    antialias: true,
+    disableFog: true,
+  });
+}
+
+function loadXYZ(xyzText) {
+  if (!viewer) return;
+  viewer.removeAllModels();
+  if (!xyzText || !xyzText.trim()) { viewer.render(); return; }
+  viewer.addModel(xyzText, "xyz");
+  viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.3 } });
+  viewer.zoomTo();
+  viewer.render();
+}
+
+function fitView() {
+  if (viewer) { viewer.zoomTo(); viewer.render(); }
+}
+
+document.addEventListener("DOMContentLoaded", initViewer);
+</script>
+</body>
+</html>

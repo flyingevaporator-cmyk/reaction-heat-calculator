@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code (local settings are personal)
+.claude/settings.local.json
+.claude/launch.json
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build outputs
+frontend/dist/
+pfd-generator/dist/
+
+# Generated artifacts
+index.html
+bom-cost.html
