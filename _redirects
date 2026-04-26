@@ -1,0 +1,8 @@
+# Cloudflare Pages: redirects & rewrites
+# Docs: https://developers.cloudflare.com/pages/configuration/redirects/
+
+# Canonical privacy URL without trailing slash
+/privacy       /privacy/       301
+
+# Legacy paths (reserve for future use)
+# /app          /index.html    200

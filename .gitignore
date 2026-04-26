@@ -36,5 +36,6 @@ frontend/dist/
 pfd-generator/dist/
 
 # Generated artifacts
-index.html
+# NOTE: root index.html is the production PWA artifact and IS tracked
+# for Cloudflare Pages deployment. bom-cost.html remains ignored.
 bom-cost.html

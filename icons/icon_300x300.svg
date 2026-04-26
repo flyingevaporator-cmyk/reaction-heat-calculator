@@ -1,0 +1,68 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#0e2440"/>
+    </linearGradient>
+    <linearGradient id="arcBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00c6ff"/>
+      <stop offset="100%" stop-color="#0072ff"/>
+    </linearGradient>
+    <linearGradient id="arcGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7971e"/>
+      <stop offset="100%" stop-color="#ffd200"/>
+    </linearGradient>
+    <filter id="glowBlue" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowGold" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background with rounded corners -->
+  <rect width="300" height="300" rx="60" ry="60" fill="url(#bgB)"/>
+
+  <!-- Subtle inner vignette -->
+  <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+    <stop offset="60%" stop-color="transparent"/>
+    <stop offset="100%" stop-color="#000" stop-opacity="0.35"/>
+  </radialGradient>
+  <rect width="300" height="300" rx="60" ry="60" fill="url(#vignette)"/>
+
+  <!-- Outer ring track -->
+  <circle cx="150" cy="150" r="105" fill="none" stroke="#1a3a5c" stroke-width="16"/>
+  <!-- Outer ring arc (blue) — 270° sweep -->
+  <path d="M150 45 A105 105 0 1 1 45 150"
+        fill="none" stroke="url(#arcBlue)" stroke-width="16" stroke-linecap="round"
+        filter="url(#glowBlue)"/>
+
+  <!-- Inner ring track -->
+  <circle cx="150" cy="150" r="72" fill="none" stroke="#0e2010" stroke-width="14"/>
+  <!-- Inner ring arc (gold) — 90° sweep -->
+  <path d="M150 78 A72 72 0 0 1 222 150"
+        fill="none" stroke="url(#arcGold)" stroke-width="14" stroke-linecap="round"
+        filter="url(#glowGold)"/>
+
+  <!-- Outer arc endpoint nodes -->
+  <circle cx="150" cy="45" r="11" fill="#00c6ff" filter="url(#glowBlue)"/>
+  <circle cx="45"  cy="150" r="9"  fill="#0072ff"/>
+
+  <!-- Inner arc endpoint nodes -->
+  <circle cx="150" cy="78"  r="9"  fill="#f7971e" filter="url(#glowGold)"/>
+  <circle cx="222" cy="150" r="9"  fill="#ffd200"/>
+
+  <!-- Center text -->
+  <text x="150" y="148"
+        text-anchor="middle"
+        font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="44" font-weight="700"
+        fill="#ffffff">ΔH</text>
+  <text x="150" y="174"
+        text-anchor="middle"
+        font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="17" font-weight="400" letter-spacing="3"
+        fill="#7ab8e8">CALC</text>
+</svg>

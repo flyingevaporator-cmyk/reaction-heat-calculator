@@ -1,0 +1,27 @@
+<svg width="50" height="50" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#0e2440"/>
+    </linearGradient>
+    <linearGradient id="arcBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00c6ff"/>
+      <stop offset="100%" stop-color="#0072ff"/>
+    </linearGradient>
+    <linearGradient id="arcGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7971e"/>
+      <stop offset="100%" stop-color="#ffd200"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="300" rx="60" ry="60" fill="url(#bgB)"/>
+  <circle cx="150" cy="150" r="105" fill="none" stroke="#1a3a5c" stroke-width="16"/>
+  <path d="M150 45 A105 105 0 1 1 45 150" fill="none" stroke="url(#arcBlue)" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="150" cy="150" r="72" fill="none" stroke="#0e2010" stroke-width="14"/>
+  <path d="M150 78 A72 72 0 0 1 222 150" fill="none" stroke="url(#arcGold)" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="150" cy="45" r="11" fill="#00c6ff"/>
+  <circle cx="45"  cy="150" r="9"  fill="#0072ff"/>
+  <circle cx="150" cy="78"  r="9"  fill="#f7971e"/>
+  <circle cx="222" cy="150" r="9"  fill="#ffd200"/>
+  <text x="150" y="148" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="44" font-weight="700" fill="#ffffff">ΔH</text>
+  <text x="150" y="174" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="3" fill="#7ab8e8">CALC</text>
+</svg>

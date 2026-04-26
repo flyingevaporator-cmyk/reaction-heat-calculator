@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "id": "/?source=pwa",
+  "name": "Reaction Heat Energy Calculator",
+  "short_name": "ReactionHeat",
+  "description": "Draw molecules or enter SMILES and compute reaction enthalpy (delta H) using bond-energy estimation. Offline-capable. No data collection.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f6f8fb",
+  "theme_color": "#4f46e5",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon_300x300.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_50x50.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_24x24.png",
+      "sizes": "24x24",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_48x48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_50x50.png",
+      "sizes": "50x50",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_150x150.png",
+      "sizes": "150x150",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_256x256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_300x300.png",
+      "sizes": "300x300",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon_620x620.png",
+      "sizes": "620x620",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icons/screenshot-desktop-2.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Enter reactants and products as SMILES or by drawing"
+    },
+    {
+      "src": "icons/screenshot-desktop-3.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Instant delta H calculation with detailed breakdown"
+    },
+    {
+      "src": "icons/screenshot-desktop-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Clean, distraction-free interface"
+    },
+    {
+      "src": "icons/screenshot-mobile-1.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile-friendly responsive layout"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Reaction",
+      "short_name": "New",
+      "description": "Start a new reaction from scratch",
+      "url": "/?new=1"
+    },
+    {
+      "name": "Privacy Policy",
+      "short_name": "Privacy",
+      "description": "View privacy policy",
+      "url": "/privacy/"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "prefer_related_applications": false
+}
