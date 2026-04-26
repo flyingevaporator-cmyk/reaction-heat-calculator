@@ -4,7 +4,7 @@
  *   - Google Fonts: stale-while-revalidate
  * Bump CACHE_VERSION on every release so clients refresh.
  */
-const CACHE_VERSION = 'rxn-heat-v1';
+const CACHE_VERSION = 'rxn-heat-v2';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const FONT_CACHE = `${CACHE_VERSION}-fonts`;
 
