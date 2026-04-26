@@ -23,18 +23,21 @@ cp -r privacy "$OUT/"
 [ -f robots.txt ] && cp robots.txt "$OUT/" || true
 
 # Generated sitemap
-cat > "$OUT/robots.txt" <<'EOF'
+# Site URL (override with SITE_URL env var when deploying to a custom domain)
+SITE_URL="${SITE_URL:-https://reaction-heat-calculator.pages.dev}"
+
+cat > "$OUT/robots.txt" <<EOF
 User-agent: *
 Allow: /
-Sitemap: /sitemap.xml
+Sitemap: ${SITE_URL}/sitemap.xml
 EOF
 
 BUILD_DATE=$(date -u +%Y-%m-%d)
 cat > "$OUT/sitemap.xml" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>/</loc><lastmod>${BUILD_DATE}</lastmod><priority>1.0</priority></url>
-  <url><loc>/privacy/</loc><lastmod>${BUILD_DATE}</lastmod><priority>0.5</priority></url>
+  <url><loc>${SITE_URL}/</loc><lastmod>${BUILD_DATE}</lastmod><priority>1.0</priority></url>
+  <url><loc>${SITE_URL}/privacy/</loc><lastmod>${BUILD_DATE}</lastmod><priority>0.5</priority></url>
 </urlset>
 EOF
 
